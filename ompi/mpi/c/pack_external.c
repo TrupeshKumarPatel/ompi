@@ -69,12 +69,14 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_datatype_pack_external(datarep, inbuf, incount,
                                      datatype, outbuf, 
                                      outsize, position);
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

@@ -93,6 +93,7 @@ int MPI_Iscan(const void *sendbuf, void *recvbuf, int count,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the coll component to actually perform the allgather */
 

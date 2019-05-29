@@ -55,6 +55,7 @@ int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = ompi_attr_set_c(COMM_ATTR, comm, &comm->c_keyhash,
                           comm_keyval, attribute_val, false);

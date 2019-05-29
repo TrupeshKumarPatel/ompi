@@ -50,6 +50,7 @@ int MPI_Win_complete(MPI_Win win)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_complete(win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);

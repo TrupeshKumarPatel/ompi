@@ -56,6 +56,7 @@ int MPI_Win_attach(MPI_Win win, void *base, MPI_Aint size)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* create window and return */
     ret = win->w_osc_module->osc_win_attach(win, base, size);

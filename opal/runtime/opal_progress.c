@@ -37,6 +37,8 @@
 #include "opal/util/output.h"
 #include "opal/runtime/opal_params.h"
 
+#include "opal/runtime/opal_reinit.h"
+
 #define OPAL_PROGRESS_USE_TIMERS (OPAL_TIMER_CYCLE_SUPPORTED || OPAL_TIMER_USEC_SUPPORTED)
 #define OPAL_PROGRESS_ONLY_USEC_NATIVE (OPAL_TIMER_USEC_NATIVE && !OPAL_TIMER_CYCLE_NATIVE)
 
@@ -222,6 +224,7 @@ static int opal_progress_events(void)
 void
 opal_progress(void)
 {
+    opal_reinit_disable();
     static uint32_t num_calls = 0;
     size_t i;
     int events = 0;
@@ -257,6 +260,7 @@ opal_progress(void)
         sched_yield();
     }
 #endif  /* defined(HAVE_SCHED_YIELD) */
+    opal_reinit_enable();
 }
 
 

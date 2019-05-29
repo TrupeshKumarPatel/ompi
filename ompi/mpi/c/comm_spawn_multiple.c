@@ -153,6 +153,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     memset(port_name, 0, MPI_MAX_PORT_NAME);
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     if ( rank == root ) {
         if (!non_mpi) {
@@ -194,6 +195,7 @@ error:
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     /* set array of errorcodes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {

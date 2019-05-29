@@ -691,6 +691,7 @@ static void* listen_thread(opal_object_t *obj)
             FD_SET(listener->sd, &readfds);
             max = (listener->sd > max) ? listener->sd : max;
         }
+
         /* add the stop_thread fd */
         FD_SET(mca_oob_tcp_component.stop_thread[0], &readfds);
         max = (mca_oob_tcp_component.stop_thread[0] > max) ? mca_oob_tcp_component.stop_thread[0] : max;
@@ -702,6 +703,7 @@ static void* listen_thread(opal_object_t *obj)
         /* Block in a select to avoid hammering the cpu.  If a connection
          * comes in, we'll get woken up right away.
          */
+
         rc = select(max + 1, &readfds, NULL, NULL, &timeout);
         if (!mca_oob_tcp_component.listen_thread_active) {
             /* we've been asked to terminate */

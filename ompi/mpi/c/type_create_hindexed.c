@@ -75,6 +75,7 @@ int MPI_Type_create_hindexed(int count,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_datatype_create_hindexed( count, array_of_blocklengths, array_of_displacements,
                                         oldtype, newtype );
@@ -91,5 +92,6 @@ int MPI_Type_create_hindexed(int count,
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

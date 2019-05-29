@@ -2088,6 +2088,9 @@ int orte_odls_base_default_restart_proc(orte_proc_t *child,
         goto CLEANUP;
     }
 
+    // Add env var for restarted processes
+    opal_setenv("OMPI_PROC_RESTART", "1", true, &app->env);
+
     /* setup the path */
     if (ORTE_SUCCESS != (rc = setup_path(app, &wdir))) {
         ORTE_ERROR_LOG(rc);

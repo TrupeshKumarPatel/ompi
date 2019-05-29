@@ -54,6 +54,7 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

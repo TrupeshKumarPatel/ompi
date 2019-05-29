@@ -30,6 +30,7 @@
  * the OPAL_CR_* checks
  */
 #include "opal/runtime/opal_cr.h"
+#include "opal/runtime/opal_reinit.h"
 
 BEGIN_C_DECLS
 

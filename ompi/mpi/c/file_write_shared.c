@@ -66,6 +66,7 @@ int MPI_File_write_shared(MPI_File fh, const void *buf, int count,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

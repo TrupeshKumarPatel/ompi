@@ -58,6 +58,7 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* This stuff is very confusing.  Be sure to see
        src/attribute/attribute.c for a lengthy comment explaining Open

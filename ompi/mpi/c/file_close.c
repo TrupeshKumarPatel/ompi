@@ -53,6 +53,7 @@ int MPI_File_close(MPI_File *fh)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Release the MPI_File; the destructor releases the component,
        zeroes out fiels, etc. */

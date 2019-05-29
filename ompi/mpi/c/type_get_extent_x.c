@@ -57,6 +57,7 @@ int MPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb, MPI_Count *extent)
   }
 
   OPAL_CR_ENTER_LIBRARY();
+  OPAL_REINIT_ENTER_LIBRARY();
 
   rc = ompi_datatype_get_extent( type, &alb, &aextent );
   if (OMPI_SUCCESS == rc) {

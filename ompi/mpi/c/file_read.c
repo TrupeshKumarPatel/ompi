@@ -62,6 +62,7 @@ int MPI_File_read(MPI_File fh, void *buf, int count,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

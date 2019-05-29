@@ -49,6 +49,7 @@ int MPI_Keyval_free(int *keyval)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = ompi_attr_free_keyval(COMM_ATTR, keyval, 0);
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);

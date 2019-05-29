@@ -83,6 +83,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     OBJ_CONSTRUCT(&values, opal_list_t);
 
     /* OMPI supports info keys to pass the range and persistence to
@@ -106,6 +107,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
                 /* unrecognized scope */
                 OPAL_LIST_DESTRUCT(&values);
                 OPAL_CR_EXIT_LIBRARY();
+                OPAL_REINIT_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -140,6 +142,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
                 /* unrecognized persistence */
                 OPAL_LIST_DESTRUCT(&values);
                 OPAL_CR_EXIT_LIBRARY();
+                OPAL_REINIT_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -157,6 +160,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     OPAL_LIST_DESTRUCT(&values);
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     if ( OPAL_SUCCESS != rc ) {
         if (OPAL_EXISTS == rc) {
             /* already exists - can't publish it */

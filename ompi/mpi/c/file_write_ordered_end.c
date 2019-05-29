@@ -54,6 +54,7 @@ int MPI_File_write_ordered_end(MPI_File fh, const void *buf, MPI_Status *status)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

@@ -51,12 +51,14 @@ int OMPI_CR_Restart(char *handle, int seq, MPI_Info *info)
      * Leader sends the request
      */
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     ret = orte_snapc.request_op(datum);
     if( OMPI_SUCCESS != ret ) {
         OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER,
                                FUNC_NAME);
     }
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     datum->is_active = false;
     OBJ_RELEASE(datum);

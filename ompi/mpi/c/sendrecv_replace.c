@@ -77,12 +77,14 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* simple case */
     if ( source == MPI_PROC_NULL || dest == MPI_PROC_NULL || count == 0 ) {
         rc = PMPI_Sendrecv(buf, count, datatype, dest, sendtag, buf, count, datatype, source, recvtag, comm, status);
 
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return rc;
     }
 
@@ -143,5 +145,6 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     OBJ_DESTRUCT(&convertor);
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

@@ -69,9 +69,11 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
                                        FUNC_NAME);
     }
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     err = comm->c_topo->topo.graph.graphdims_get(comm, nnodes, nedges);
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

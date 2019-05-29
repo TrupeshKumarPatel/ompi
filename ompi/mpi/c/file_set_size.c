@@ -51,6 +51,7 @@ int MPI_File_set_size(MPI_File fh, MPI_Offset size)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

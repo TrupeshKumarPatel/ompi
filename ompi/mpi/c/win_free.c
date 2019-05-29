@@ -49,6 +49,7 @@ int MPI_Win_free(MPI_Win *win)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = ompi_win_free(*win);
     if (OMPI_SUCCESS == ret) {

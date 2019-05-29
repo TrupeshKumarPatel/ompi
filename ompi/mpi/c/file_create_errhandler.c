@@ -53,6 +53,7 @@ int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
   }
 
   OPAL_CR_ENTER_LIBRARY();
+  OPAL_REINIT_ENTER_LIBRARY();
 
   /* Create and cache the errhandler.  Sets a refcount of 1. */
 

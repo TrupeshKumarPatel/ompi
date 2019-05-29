@@ -49,6 +49,7 @@ int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     opal_infosubscribe_change_info(&(comm->super), &(info->super));
 

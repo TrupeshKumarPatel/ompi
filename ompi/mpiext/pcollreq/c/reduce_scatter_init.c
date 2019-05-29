@@ -132,6 +132,7 @@ int MPIX_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvc
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

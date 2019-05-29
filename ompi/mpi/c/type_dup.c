@@ -55,6 +55,7 @@ int MPI_Type_dup (MPI_Datatype type,
    }
 
    OPAL_CR_ENTER_LIBRARY();
+   OPAL_REINIT_ENTER_LIBRARY();
 
    if (OMPI_SUCCESS != ompi_datatype_duplicate( type, newtype)) {
        ompi_datatype_destroy( newtype );
@@ -82,6 +83,7 @@ int MPI_Type_dup (MPI_Datatype type,
    }
 
    OPAL_CR_EXIT_LIBRARY();
+   OPAL_REINIT_EXIT_LIBRARY();
 
    return MPI_SUCCESS;
 }

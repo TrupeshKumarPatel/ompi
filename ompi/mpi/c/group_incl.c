@@ -83,6 +83,7 @@ int MPI_Group_incl(MPI_Group group, int n, const int ranks[], MPI_Group *new_gro
   }
 
   OPAL_CR_ENTER_LIBRARY();
+  OPAL_REINIT_ENTER_LIBRARY();
 
   err = ompi_group_incl(group,n,ranks,new_group);
   OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD,err,FUNC_NAME);

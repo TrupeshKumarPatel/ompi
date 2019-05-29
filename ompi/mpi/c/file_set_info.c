@@ -61,6 +61,7 @@ int MPI_File_set_info(MPI_File fh, MPI_Info info)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = opal_infosubscribe_change_info(&fh->super, &info->super);
 

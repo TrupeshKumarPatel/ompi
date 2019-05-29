@@ -59,6 +59,7 @@ int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     err = comm->c_coll->coll_ibarrier(comm, request, comm->c_coll->coll_ibarrier_module);
 

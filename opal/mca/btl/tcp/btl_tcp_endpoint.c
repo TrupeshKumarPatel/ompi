@@ -358,10 +358,15 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
                 MCA_BTL_TCP_ENDPOINT_DUMP(50, btl_endpoint, true, "complete send fragment [endpoint_send]");
                 return 1;
             } else {
-                btl_endpoint->endpoint_send_frag = frag;
-                MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(send) [endpoint_send]");
-                frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-                MCA_BTL_TCP_ACTIVATE_EVENT(&btl_endpoint->endpoint_send_event, 0);
+                if( MCA_BTL_TCP_CLOSED == btl_endpoint->endpoint_state ) {
+                    rc = OPAL_ERR_UNREACH;
+                    break;
+                } else {
+                    btl_endpoint->endpoint_send_frag = frag;
+                    MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(send) [endpoint_send]");
+                    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+                    MCA_BTL_TCP_ACTIVATE_EVENT(&btl_endpoint->endpoint_send_event, 0);
+                }
             }
         } else {
             MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "send fragment enqueued [endpoint_send]");

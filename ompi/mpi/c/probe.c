@@ -78,6 +78,7 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(probe(source, tag, comm, status));
     /*

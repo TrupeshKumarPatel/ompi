@@ -247,7 +247,12 @@ void ompi_errhandler_callback(int status,
         cbfunc(OMPI_ERR_HANDLERS_COMPLETE, NULL, NULL, NULL, cbdata);
     }
     /* our default action is to abort */
-    ompi_mpi_abort(MPI_COMM_WORLD, status);
+    /* GG: DO NOT abort on error */
+    printf("%s:%d INACTIVATED ompi_errhandler_callback (ompi_mpi_abort)\n", __FILE__, __LINE__);
+    //ompi_mpi_abort(MPI_COMM_WORLD, status);
+    /*printf("************************************\n");
+    printf("%s:%d status %d should never be called!\n", __FILE__, __LINE__, status);
+    printf("************************************\n");*/
 }
 
 /**************************************************************************

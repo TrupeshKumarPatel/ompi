@@ -74,6 +74,7 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
      }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(mrecv(buf, count, type, message, status));
     /* Per MPI-1, the MPI_ERROR field is not defined for

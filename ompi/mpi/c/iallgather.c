@@ -97,6 +97,7 @@ int MPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_iallgather(sendbuf, sendcount, sendtype,

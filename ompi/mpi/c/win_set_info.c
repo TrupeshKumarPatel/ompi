@@ -47,6 +47,7 @@ int MPI_Win_set_info(MPI_Win win, MPI_Info info)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = opal_infosubscribe_change_info(&(win->super), &(info->super));
 

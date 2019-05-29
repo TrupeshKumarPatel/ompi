@@ -52,6 +52,7 @@ int OMPI_CR_Quiesce_checkpoint(MPI_Comm commP, char **handle, int *seq, MPI_Info
      * Since we are quiescent, then this is a local operation
      */
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     ret = orte_snapc.request_op(datum);
     /*ret = ompi_crcp_base_quiesce_start(info);*/
     if( OMPI_SUCCESS != ret ) {
@@ -59,6 +60,7 @@ int OMPI_CR_Quiesce_checkpoint(MPI_Comm commP, char **handle, int *seq, MPI_Info
                                FUNC_NAME);
     }
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     *handle = strdup(datum->global_handle);
     *seq = datum->seq_num;

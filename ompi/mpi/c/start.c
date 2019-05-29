@@ -72,10 +72,12 @@ int MPI_Start(MPI_Request *request)
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
         }
         OPAL_CR_ENTER_LIBRARY();
+        OPAL_REINIT_ENTER_LIBRARY();
 
         ret = (*request)->req_start(1, request);
 
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return ret;
 
     case OMPI_REQUEST_NOOP:

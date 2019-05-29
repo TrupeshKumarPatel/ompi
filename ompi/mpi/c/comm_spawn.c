@@ -113,6 +113,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     if ( rank == root ) {
         if (!non_mpi) {
@@ -153,6 +154,7 @@ error:
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {

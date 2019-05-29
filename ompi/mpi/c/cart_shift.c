@@ -74,10 +74,12 @@ int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
                                       FUNC_NAME);
     }
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* call the function */
     err = comm->c_topo->topo.cart.cart_shift(comm, direction, disp, rank_source, rank_dest);
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

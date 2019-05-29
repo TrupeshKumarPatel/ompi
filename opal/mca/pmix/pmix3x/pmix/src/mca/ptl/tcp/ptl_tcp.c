@@ -1011,7 +1011,7 @@ static pmix_status_t recv_connect_ack(int sd)
        }
    } else {
         /* set a timeout on the blocking recv so we don't hang */
-        tv.tv_sec  = 2;
+        //tv.tv_sec  = 2;
         tv.tv_usec = 0;
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,

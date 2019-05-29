@@ -67,6 +67,7 @@ int MPI_Register_datarep(const char *datarep,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
     rc = mca_io_base_register_datarep(datarep, read_conversion_fn,

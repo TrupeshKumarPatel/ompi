@@ -376,6 +376,12 @@ int mca_base_var_group_deregister (int group_index)
         OBJ_RELEASE (enums[i]);
     }
 
+    /* TODO: GG: re-initialize group_enums, is that a bug? unused
+    OBJ_DESTRUCT(&group->group_enums);
+    OBJ_CONSTRUCT(&group->group_enums, opal_value_array_t);
+    opal_value_array_init (&group->group_enums, sizeof(void *));
+    */
+
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
     for (int i = 0 ; i < size ; ++i) {

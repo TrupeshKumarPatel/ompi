@@ -33,6 +33,9 @@
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+// Reinit
+#include "opal/runtime/opal_reinit.h"
+#include "orte/runtime/orte_reinit.h"
 
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/rml/rml.h"
@@ -61,6 +64,10 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
+
+// Reinit
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_private.h"
 
 #include "errmgr_default_hnp.h"
 
@@ -439,6 +446,120 @@ static void proc_errors(int fd, short args, void *cbdata)
             }
             goto cleanup;
         }
+
+        if( orte_enable_recovery ) {
+            /* Reinit recover from Node failure */
+            // if the daemon failed we assume the node has failed
+            orte_node_t *failed_node = pptr->node;
+
+            opal_list_item_t *item;
+            // list to store failed procs
+            opal_list_t failed_proc_list;
+            OBJ_CONSTRUCT(&failed_proc_list, opal_list_t);
+
+            // Loop through all processes in the node to re-assign them
+            // to another node and add them to the failed_proc_list
+            for (i=0; i < failed_node->procs->size; i++) {
+                orte_proc_t *pproc;
+                if (NULL != (pproc = (orte_proc_t*)opal_pointer_array_get_item(failed_node->procs, i))) {
+
+                    orte_job_t *jdata2;
+                    if (NULL == (jdata2 = orte_get_job_data_object(pproc->name.jobid)))
+                        assert(0);
+
+                    /* assign node */
+                    opal_list_t node_list;
+                    orte_std_cntr_t num_slots;
+                    orte_app_context_t *app;
+                    orte_node_t *node;
+
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata2->apps, pproc->app_idx);
+                    if( NULL == app ) {
+                        assert(0);
+                    }
+
+                    OBJ_CONSTRUCT(&node_list, opal_list_t);
+                    if (ORTE_SUCCESS != orte_rmaps_base_get_target_nodes(&node_list,
+                                &num_slots,
+                                app,
+                                jdata2->map->mapping,
+                                false, false)) {
+                        assert(0);
+                    }
+                    if (opal_list_is_empty(&node_list))
+                        assert(0);
+
+                    // find least loaded node
+                    orte_node_t *newnode = NULL;
+                    while (NULL != (item = opal_list_remove_first(&node_list))) {
+                        node = (orte_node_t*)item;
+                        if( node == failed_node ) {
+                            continue;
+                        }
+                        if( node->num_procs >= node->slots ) {
+                            continue;
+                        }
+                        if( NULL == newnode || newnode->num_procs >= node->num_procs) {
+                            newnode = node;
+                        }
+                    }
+
+                    assert( NULL != newnode );
+                    while (NULL != (item = opal_list_remove_first(&node_list)))
+                        OBJ_RELEASE(item);
+                    OBJ_DESTRUCT(&node_list);
+
+                    // replace failed node with new node
+                    // NOTE: it may have been replaced by a previous proc of the same job
+                    orte_node_t *nptr;
+                    int j;
+                    for (j=0; j < jdata2->map->nodes->size; j++) {
+                        if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(jdata2->map->nodes, j))) {
+                            continue;
+                        }
+                        if (nptr == failed_node) {
+                            // TODO do this once
+                            OBJ_RETAIN(newnode);
+                            opal_pointer_array_set_item(jdata2->map->nodes, j, newnode);
+                            ORTE_FLAG_SET(newnode, ORTE_NODE_FLAG_MAPPED);
+                            break;
+                        }
+                    }
+
+                    // add node
+                    pproc->node = newnode;
+                    // update daemon
+                    pproc->parent = newnode->daemon->name.vpid;
+
+                    // update node info
+                    newnode->num_procs++;
+                    opal_pointer_array_add(newnode->procs, (void*)pproc);
+
+                    orte_rmaps_base_update_local_ranks(jdata2, failed_node, newnode, pproc);
+
+                    /* if we wanted to see the map, now is the time to display it */
+                    if (jdata2->map->display_map) {
+                        orte_rmaps_base_display_map(jdata2);
+                    }
+                    /* end assign node */
+
+                    OBJ_RETAIN( pproc );
+                    opal_list_append( &failed_proc_list, &pproc->super );
+                }
+            }
+
+            // XXX: Set the node state last to make it searchable when updating jdata2->map->nodes
+            failed_node->state = ORTE_NODE_STATE_DOWN;
+
+            orte_reinit_restart_procs( &failed_proc_list );
+
+            while (NULL != (item = opal_list_remove_first(&failed_proc_list)))
+                OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&failed_proc_list);
+
+            goto cleanup;
+        }
+
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s Comm failure: daemon %s - aborting",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
@@ -506,15 +627,44 @@ static void proc_errors(int fd, short args, void *cbdata)
      * to do - we let the job continue to run */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL) ||
         ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RECOVERABLE)) {
-        /* always mark the waitpid as having fired */
-        ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_WAITPID_FIRED);
-        /* if this is a remote proc, we won't hear anything more about it
-         * as the default behavior would be to terminate the job. So be sure to
-         * mark the IOF as having completed too so we correctly mark this proc
-         * as dead and notify everyone as required */
-        if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
-            ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_IOF_COMPLETE);
+
+        // Reinit
+        if( orte_enable_recovery ) {
+            if( ( state == ORTE_PROC_STATE_ABORTED_BY_SIG ) &&
+                    ( SIGREINIT == WTERMSIG(pptr->exit_code) ) ) {
+                fprintf(stderr, "*** SIGREINIT terminated process\n"
+                        "*** UNSUPPORTED RECOVERY\n"
+                        "*** SIGREINIT delivery before MPI_Reinit\n"
+                      );
+                default_hnp_abort(jdata);
+            }
+            else {
+                opal_list_t failed_proc_list;
+                OBJ_CONSTRUCT(&failed_proc_list, opal_list_t);
+                opal_list_item_t *item;
+
+                OBJ_RETAIN( pptr );
+                opal_list_append(&failed_proc_list, &pptr->super);
+
+                orte_reinit_restart_procs( &failed_proc_list );
+
+                while (NULL != (item = opal_list_remove_first(&failed_proc_list)))
+                    OBJ_RELEASE(item);
+                OBJ_DESTRUCT(&failed_proc_list);
+            }
         }
+        else {
+            /* always mark the waitpid as having fired */
+            ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_WAITPID_FIRED);
+            /* if this is a remote proc, we won't hear anything more about it
+             * as the default behavior would be to terminate the job. So be sure to
+             * mark the IOF as having completed too so we correctly mark this proc
+             * as dead and notify everyone as required */
+            if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
+                ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_IOF_COMPLETE);
+            }
+        }
+
         goto cleanup;
     }
 
@@ -625,6 +775,10 @@ static void proc_errors(int fd, short args, void *cbdata)
                              ORTE_NAME_PRINT(proc),
                              orte_proc_state_to_str(state)));
         if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
+            // we detected this node failure, do not handle again
+            if( ORTE_NODE_STATE_DOWN == pptr->node->state ) {
+                break;
+            }
             if (ORTE_PROC_STATE_FAILED_TO_START) {
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
             } else {

@@ -70,6 +70,7 @@ int MPI_Mprobe(int source, int tag, MPI_Comm comm,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(mprobe(source, tag, comm, message, status));
     /* Per MPI-1, the MPI_ERROR field is not defined for

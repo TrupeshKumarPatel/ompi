@@ -57,6 +57,7 @@ int MPI_Grequest_complete(MPI_Request request)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_grequest_complete(request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);

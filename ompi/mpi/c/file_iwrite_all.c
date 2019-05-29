@@ -72,6 +72,7 @@ int MPI_File_iwrite_all(MPI_File fh, const void *buf, int count, MPI_Datatype
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
     switch (fh->f_io_version) {

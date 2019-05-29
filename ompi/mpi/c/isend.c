@@ -84,6 +84,7 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype type, int dest,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /*
      * today's MPI standard mandates the send buffer remains accessible during the send operation

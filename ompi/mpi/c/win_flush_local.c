@@ -54,6 +54,7 @@ int MPI_Win_flush_local(int rank, MPI_Win win)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* create window and return */
     ret = win->w_osc_module->osc_flush_local(rank, win);

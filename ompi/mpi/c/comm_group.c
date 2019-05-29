@@ -59,6 +59,7 @@ int MPI_Comm_group(MPI_Comm comm, MPI_Group *group) {
     } /* end if ( MPI_PARAM_CHECK) */
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
    rc = ompi_comm_group ( (ompi_communicator_t*)comm, (ompi_group_t**)group );
    OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);

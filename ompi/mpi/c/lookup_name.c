@@ -82,6 +82,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
@@ -106,6 +107,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
                 /* unrecognized scope */
                 OPAL_LIST_DESTRUCT(&pinfo);
                 OPAL_CR_EXIT_LIBRARY();
+                OPAL_REINIT_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -135,6 +137,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
         }
 
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
     }
 
@@ -142,5 +145,6 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     OPAL_LIST_DESTRUCT(&results);
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

@@ -75,6 +75,7 @@ int MPI_File_delete(const char *filename, MPI_Info info)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Since there is no MPI_File handle associated with this
        function, the MCA has to do a selection and perform the

@@ -143,6 +143,7 @@ int MPIX_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], co
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_neighbor_alltoallv_init(sendbuf, sendcounts, sdispls,

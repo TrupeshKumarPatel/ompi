@@ -88,6 +88,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     /*
      * everything seems to be alright with the communicator, we can go
      * ahead and select a topology module for this purpose and create
@@ -105,6 +106,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
                                         nnodes, indx, edges,
                                         (0 == reorder) ? false : true, comm_graph);
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     if (MPI_SUCCESS != err) {
         OBJ_RELEASE(topo);

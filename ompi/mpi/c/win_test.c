@@ -50,6 +50,7 @@ int MPI_Win_test(MPI_Win win, int *flag)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_test(win, flag);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);

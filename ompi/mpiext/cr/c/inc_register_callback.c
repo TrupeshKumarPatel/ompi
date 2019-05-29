@@ -33,6 +33,7 @@ int OMPI_CR_INC_register_callback(OMPI_CR_INC_callback_event_t event,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = opal_cr_user_inc_register_callback(event, function, prev_function);
 

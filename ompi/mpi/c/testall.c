@@ -79,19 +79,23 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     if (OMPI_SUCCESS == ompi_request_test_all(count, requests, flag,
                                               statuses)) {
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     if (MPI_SUCCESS !=
         ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return MPI_ERR_IN_STATUS;
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

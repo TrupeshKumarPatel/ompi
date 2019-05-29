@@ -532,6 +532,8 @@ int pmix3x_server_notify_event(int status,
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
+    // GG: Fix generic bug in pmix to communicate the corre range value
+    pmix_data_range_t range = PMIX_RANGE_SESSION;
     /* convert the list to an array of pmix_info_t */
     if (NULL != info && 0 < (sz = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, sz);
@@ -542,6 +544,8 @@ int pmix3x_server_notify_event(int status,
                 pinfo[n].value.type = PMIX_STATUS;
                 pinfo[n].value.data.status = pmix3x_convert_opalrc(kv->data.integer);
             } else {
+                if( 0 == strcmp(kv->key, PMIX_EVENT_CUSTOM_RANGE) )
+                        range = PMIX_RANGE_CUSTOM;
                 pmix3x_value_load(&pinfo[n].value, kv);
             }
             ++n;
@@ -569,7 +573,7 @@ int pmix3x_server_notify_event(int status,
     rc = pmix3x_convert_opalrc(status);
     /* the range must be nonlocal so the server will pass
      * the event down to its local clients */
-    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_SESSION,
+    rc = PMIx_Notify_event(rc, &op->p, range,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);

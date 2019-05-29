@@ -298,6 +298,38 @@ static int fini_vader_endpoint (struct mca_btl_base_endpoint_t *ep)
         OBJ_DESTRUCT(ep);
     }
 
+    for (int fifo_count = 0 ; fifo_count < 31 ; ++fifo_count) {
+        vader_fifo_t *fifo = mca_btl_vader_component.my_fifo;
+        if (VADER_FIFO_FREE == fifo->fifo_head) {
+            continue;
+        }
+
+        opal_atomic_rmb ();
+
+        fifo_value_t value;
+        value = fifo->fifo_head;
+
+        struct mca_btl_base_endpoint_t *fifo_ep;
+        fifo_ep = &mca_btl_vader_component.endpoints[value >> MCA_BTL_VADER_OFFSET_BITS];
+        if(fifo_ep == ep) {
+            fifo->fifo_head = VADER_FIFO_FREE;
+        }
+    }
+
+    opal_atomic_wmb ();
+
+    for (unsigned int i = 0 ; i < mca_btl_vader_component.num_fbox_in_endpoints ; ++i) {
+        mca_btl_base_endpoint_t *fbox_ep = mca_btl_vader_component.fbox_in_endpoints[i];
+        // XXX: is pointer equality correct?
+        if( fbox_ep == ep ) {
+            /* Shift any other endpoints to the left */
+            for(unsigned int j = i; j < mca_btl_vader_component.num_fbox_in_endpoints ; ++j)
+                mca_btl_vader_component.fbox_in_endpoints[j] = mca_btl_vader_component.fbox_in_endpoints[j+1];
+
+            mca_btl_vader_component.num_fbox_in_endpoints--;
+        }
+    }
+
     return OPAL_SUCCESS;
 }
 

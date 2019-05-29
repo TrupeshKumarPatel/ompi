@@ -53,6 +53,7 @@ int MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_post(group, assert, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);

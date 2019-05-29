@@ -53,6 +53,7 @@ int MPI_Win_sync(MPI_Win win)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = win->w_osc_module->osc_sync(win);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);

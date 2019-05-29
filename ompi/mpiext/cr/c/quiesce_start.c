@@ -61,6 +61,7 @@ int OMPI_CR_Quiesce_start(MPI_Comm commP, MPI_Info *info)
      * Leader sends the request
      */
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     ret = orte_snapc.request_op(datum);
     /*ret = ompi_crcp_base_quiesce_start(info);*/
     if( OMPI_SUCCESS != ret ) {
@@ -70,6 +71,7 @@ int OMPI_CR_Quiesce_start(MPI_Comm commP, MPI_Info *info)
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     datum->is_active = false;
     OBJ_RELEASE(datum);

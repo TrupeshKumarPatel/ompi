@@ -58,10 +58,12 @@ int MPI_Comm_free(MPI_Comm *comm)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = ompi_comm_free ( comm );
     OMPI_ERRHANDLER_CHECK(ret, *comm, ret, FUNC_NAME);
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

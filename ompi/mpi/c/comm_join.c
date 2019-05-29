@@ -84,6 +84,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* send my process name */
     tmp_name = *OMPI_PROC_MY_NAME;
@@ -102,6 +103,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
             /* joining to myself is not allowed */
             *intercomm = MPI_COMM_NULL;
             OPAL_CR_EXIT_LIBRARY();
+            OPAL_REINIT_EXIT_LIBRARY();
             return MPI_ERR_INTERN;
         } else {
             send_first = false;
@@ -140,11 +142,13 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     rc = ompi_dpm_connect_accept (MPI_COMM_SELF, 0, port_name, send_first, &newcomp);
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     *intercomm = newcomp;
 
  error:
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     if (OPAL_ERR_NOT_SUPPORTED == rc) {
         opal_show_help("help-mpi-api.txt",

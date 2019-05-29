@@ -51,6 +51,7 @@ int MPI_File_sync(MPI_File fh)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
 

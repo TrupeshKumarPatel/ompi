@@ -62,6 +62,7 @@ int MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_comm_idup (comm, newcomm, request);
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

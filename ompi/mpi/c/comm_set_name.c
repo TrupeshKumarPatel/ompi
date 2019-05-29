@@ -66,6 +66,7 @@ int MPI_Comm_set_name(MPI_Comm comm, const char *name)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_comm_set_name (comm, name );
     /* -- Tracing information for new communicator name -- */

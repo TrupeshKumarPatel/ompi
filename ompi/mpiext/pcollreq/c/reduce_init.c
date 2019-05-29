@@ -138,6 +138,7 @@ int MPIX_Reduce_init(const void *sendbuf, void *recvbuf, int count,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_reduce_init(sendbuf, recvbuf, count,

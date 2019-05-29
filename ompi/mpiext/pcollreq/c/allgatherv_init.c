@@ -123,6 +123,7 @@ int MPIX_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_allgatherv_init(sendbuf, sendcount, sendtype,

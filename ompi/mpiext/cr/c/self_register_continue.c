@@ -33,6 +33,7 @@ int OMPI_CR_self_register_continue_callback(OMPI_CR_self_continue_fn function)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = opal_crs_base_self_register_continue_callback(function);
 

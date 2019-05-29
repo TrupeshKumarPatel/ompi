@@ -53,6 +53,7 @@ int MPI_File_get_group(MPI_File fh, MPI_Group *group)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Does not need to invoke a back-end io function */
 

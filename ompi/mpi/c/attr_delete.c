@@ -56,6 +56,7 @@ int MPI_Attr_delete(MPI_Comm comm, int keyval)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, keyval,
                            false);

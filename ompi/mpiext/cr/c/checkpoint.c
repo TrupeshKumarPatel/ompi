@@ -59,6 +59,7 @@ int OMPI_CR_Checkpoint(char **handle, int *seq, MPI_Info *info)
      * Leader sends the request
      */
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     ret = orte_snapc.request_op(datum);
     if( OMPI_SUCCESS != ret ) {
         OBJ_RELEASE(datum);
@@ -66,6 +67,7 @@ int OMPI_CR_Checkpoint(char **handle, int *seq, MPI_Info *info)
                                FUNC_NAME);
     }
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     /*
      * Leader then sends out the commit message

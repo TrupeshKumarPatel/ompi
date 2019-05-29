@@ -82,12 +82,15 @@ int MPI_Waitany(int count, MPI_Request requests[], int *indx, MPI_Status *status
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, indx, status)) {
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
 }

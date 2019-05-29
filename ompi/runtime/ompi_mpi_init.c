@@ -62,6 +62,7 @@
 #include "opal/mca/pmix/base/base.h"
 #include "opal/util/timings.h"
 #include "opal/util/opal_environ.h"
+#include "opal/runtime/opal_reinit.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
@@ -381,6 +382,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     volatile bool active;
     bool background_fence = false;
 
+    // disable SIGREINIT to avoid any created threads handling it
+    opal_reinit_disable();
     OMPI_TIMING_INIT(64);
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);

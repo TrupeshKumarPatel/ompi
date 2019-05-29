@@ -69,9 +69,11 @@ int MPI_Cartdim_get(MPI_Comm comm, int *ndims)
                                        FUNC_NAME);
     }
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     err = comm->c_topo->topo.cart.cartdim_get(comm, ndims);
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

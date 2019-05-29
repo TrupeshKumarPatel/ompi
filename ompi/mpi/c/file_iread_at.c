@@ -66,6 +66,7 @@ int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
     switch (fh->f_io_version) {

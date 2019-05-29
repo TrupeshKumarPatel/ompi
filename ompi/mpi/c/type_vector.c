@@ -67,6 +67,7 @@ int MPI_Type_vector(int count,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_datatype_create_vector ( count, blocklength, stride, oldtype, newtype );
     OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
@@ -78,5 +79,6 @@ int MPI_Type_vector(int count,
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

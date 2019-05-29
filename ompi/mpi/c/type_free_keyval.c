@@ -52,6 +52,7 @@ int MPI_Type_free_keyval(int *type_keyval)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     ret = ompi_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
 

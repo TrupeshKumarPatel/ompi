@@ -61,6 +61,7 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_request_test(request, completed, status);
     if (*completed < 0) {
@@ -72,6 +73,7 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     );
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     if (OMPI_SUCCESS == rc) {
         return MPI_SUCCESS;

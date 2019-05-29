@@ -49,6 +49,7 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_HEARTBEAT_CMD           (orte_daemon_cmd_flag_t) 6
 #define ORTE_DAEMON_EXIT_CMD                (orte_daemon_cmd_flag_t) 7
 #define ORTE_DAEMON_PROCESS_AND_RELAY_CMD   (orte_daemon_cmd_flag_t) 9
+#define ORTE_DAEMON_RESTART_PROCS           (orte_daemon_cmd_flag_t) 10
 #define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 11
 
 /* commands for use by tools */

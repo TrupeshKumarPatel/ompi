@@ -76,6 +76,7 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* create window and return */
     ret = ompi_win_create(base, (size_t)size, disp_unit, comm,
@@ -83,9 +84,11 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

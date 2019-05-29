@@ -1710,13 +1710,13 @@ static void connection_handler(int sd, short args, void *cbdata)
 
       /* send the client's array index */
     u32 = htonl(peer->index);
-      if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&u32, sizeof(uint32_t)))) {
-          PMIX_ERROR_LOG(rc);
-          info->proc_cnt--;
-          pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
-          PMIX_RELEASE(peer);
-          goto error;
-      }
+    if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&u32, sizeof(uint32_t)))) {
+        PMIX_ERROR_LOG(rc);
+        info->proc_cnt--;
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
+        PMIX_RELEASE(peer);
+        goto error;
+    }
 
       pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                           "connect-ack from client completed");

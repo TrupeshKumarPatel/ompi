@@ -65,6 +65,7 @@ int MPI_Cancel(MPI_Request *request)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     rc = ompi_request_cancel(*request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

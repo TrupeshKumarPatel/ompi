@@ -98,6 +98,7 @@ int MPI_Type_create_darray(int size,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_datatype_create_darray( size, rank, ndims,
                                       gsize_array, distrib_array, darg_array, psize_array,
@@ -111,6 +112,7 @@ int MPI_Type_create_darray(int size,
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

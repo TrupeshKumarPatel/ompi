@@ -78,6 +78,7 @@ int MPI_Startall(int count, MPI_Request requests[])
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     for (i = 0, j = -1; i < count; ++i) {
         /* Per MPI it is invalid to start an active request */
@@ -111,6 +112,7 @@ int MPI_Startall(int count, MPI_Request requests[])
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return ret;
 }
 

@@ -122,6 +122,7 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ialltoallw(sendbuf, sendcounts, sdispls,

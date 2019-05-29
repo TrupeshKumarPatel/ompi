@@ -85,6 +85,7 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
     OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
     /* OMPI supports info keys to pass the range to
@@ -140,9 +141,11 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         }
 
         OPAL_CR_EXIT_LIBRARY();
+        OPAL_REINIT_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     OPAL_CR_EXIT_LIBRARY();
+    OPAL_REINIT_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

@@ -249,6 +249,7 @@ struct ompi_request_t;
   if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     OPAL_CR_EXIT_LIBRARY() \
+    OPAL_REINIT_EXIT_LIBRARY() \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
 			   (mpi_object), \
                            (int) (mpi_object)->errhandler_type, \
@@ -274,6 +275,7 @@ struct ompi_request_t;
  */
 #define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
   OPAL_CR_EXIT_LIBRARY() \
+  OPAL_REINIT_EXIT_LIBRARY() \
   if ( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     ompi_errhandler_invoke((mpi_object)->error_handler, \

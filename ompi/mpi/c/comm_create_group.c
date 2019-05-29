@@ -74,6 +74,7 @@ int MPI_Comm_create_group (MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *ne
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OPAL_REINIT_ENTER_LIBRARY();
 
     rc = ompi_comm_create_group ((ompi_communicator_t *) comm, (ompi_group_t *) group,
                                  tag, (ompi_communicator_t **) newcomm);

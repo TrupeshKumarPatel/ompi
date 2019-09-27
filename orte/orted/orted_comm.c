@@ -1457,49 +1457,52 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 goto CLEANUP;
             }
 
+            /* Fix jdata and proc objects */
+            /* look up job data object */
+            jdata = orte_get_job_data_object(proc.jobid);
+            assert( NULL != jdata );
+
+            proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc.vpid);
+            orte_remove_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED);
+
+            // need to do a lot more work to restart a migrated process
+            orte_job_t *daemons = (orte_job_t *)orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+            assert(NULL != daemons);
+            orte_proc_t *dmn = opal_pointer_array_get_item(daemons->procs,parent);
+            assert(NULL != dmn);
+
+            // replace failed node in jdata->map with local node
+            int nds = 0;
+            for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
+                if (NULL == (node = opal_pointer_array_get_item(jdata->map->nodes, i))) {
+                    continue;
+                }
+
+                if(node == proct->node) {
+                    opal_pointer_array_set_item(jdata->map->nodes, i, dmn->node);
+                    break;
+                }
+            }
+
+            // Update proc info
+            proct->parent = parent;
+            OBJ_RETAIN(dmn->node);
+            proct->node = dmn->node;
+            OBJ_RETAIN(proct);
+
+            // Update node info
+            // TODO: Fix attributes, e.g., ORTE_PROC_CPU_BITMAP
+            proct->node->num_procs++;
+            opal_pointer_array_add(proct->node->procs, (void*)proct);
+
+            /* END */
+
             // Check whether this process is local to restart
             // using the parent daemon (may change due to node failure)
             if( parent == ORTE_PROC_MY_NAME->vpid ) {
-                /* look up job data object */
-                jdata = orte_get_job_data_object(proc.jobid);
-                assert( NULL != jdata );
-
-                proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc.vpid);
-
-                orte_remove_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED);
                 // if the process is migrated, complicated restart
                 if( !ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_LOCAL) ) {
-                    // need to do a lot more work to restart a migrated process
-                    orte_job_t *daemons = (orte_job_t *)orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-                    assert(NULL != daemons);
-                    orte_proc_t *dmn = opal_pointer_array_get_item(daemons->procs,parent);
-                    assert(NULL != dmn);
-
-                    // Fix jdata
                     jdata->num_local_procs++;
-                    // replace failed node in jdata->map with local node
-                    int nds = 0;
-                    for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
-                        if (NULL == (node = opal_pointer_array_get_item(jdata->map->nodes, i))) {
-                            continue;
-                        }
-
-                        if(node == proct->node) {
-                            opal_pointer_array_set_item(jdata->map->nodes, i, dmn->node);
-                            break;
-                        }
-                    }
-
-                    // Update proc info
-                    proct->parent = parent;
-                    OBJ_RETAIN(dmn->node);
-                    proct->node = dmn->node;
-                    OBJ_RETAIN(proct);
-
-                    // Update node info
-                    // TODO: Fix attributes, e.g., ORTE_PROC_CPU_BITMAP
-                    proct->node->num_procs++;
-                    opal_pointer_array_add(proct->node->procs, (void*)proct);
 
                     // set flags
                     ORTE_FLAG_SET(proct, ORTE_PROC_FLAG_LOCAL);

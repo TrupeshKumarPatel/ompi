@@ -1611,7 +1611,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                                     (void*)proct, NULL, NULL))) {
                         ORTE_ERROR_LOG(ret);
                     }
-                    if (ORTE_SUCCESS != (ret = orte_odls.restart_proc( proct ) ) ) {
+
+                    if (ORTE_SUCCESS != (ret = orte_reinit_restart_proc( proct ) ) ) {
                         ORTE_ERROR_LOG(ret);
                     }
                 }
@@ -1626,7 +1627,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     }
 
                     /* restart proc */
-                    if (ORTE_SUCCESS != (ret = orte_odls.restart_proc( proct ) ) ) {
+                    if (ORTE_SUCCESS != (ret = orte_reinit_restart_proc( proct ) ) ) {
                         ORTE_ERROR_LOG(ret);
                     }
                 }

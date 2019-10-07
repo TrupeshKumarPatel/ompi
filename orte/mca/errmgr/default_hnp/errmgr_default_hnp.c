@@ -551,7 +551,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             // XXX: Set the node state last to make it searchable when updating jdata2->map->nodes
             failed_node->state = ORTE_NODE_STATE_DOWN;
 
-            orte_reinit_restart_procs( &failed_proc_list );
+            orte_reinit_send_restart_cmd( &failed_proc_list );
 
             while (NULL != (item = opal_list_remove_first(&failed_proc_list)))
                 OBJ_RELEASE(item);
@@ -646,7 +646,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                 OBJ_RETAIN( pptr );
                 opal_list_append(&failed_proc_list, &pptr->super);
 
-                orte_reinit_restart_procs( &failed_proc_list );
+                orte_reinit_send_restart_cmd( &failed_proc_list );
 
                 while (NULL != (item = opal_list_remove_first(&failed_proc_list)))
                     OBJ_RELEASE(item);

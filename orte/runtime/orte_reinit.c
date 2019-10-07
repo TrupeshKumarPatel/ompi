@@ -8,6 +8,10 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls.h"
+#include "orte/util/threads.h"
+
+#include "opal/mca/pmix/pmix.h"
 
 static int _send_proc_restart_bcast( opal_list_t *proc_list )
 {
@@ -71,8 +75,48 @@ static int _send_proc_restart_bcast( opal_list_t *proc_list )
     return rc;
 }
 
-int orte_reinit_restart_procs( opal_list_t *proc_list )
+int orte_reinit_send_restart_cmd( opal_list_t *proc_list )
 {
     _send_proc_restart_bcast( proc_list );
+
+    return 0;
 }
 
+static void trk_con(orte_restart_tracker_t *p)
+{
+    p->proc = NULL;
+}
+
+static void trk_des(orte_restart_tracker_t *p)
+{
+    if (NULL != p->proc) {
+        OBJ_RELEASE(p->proc);
+    }
+}
+
+OBJ_CLASS_INSTANCE(orte_restart_tracker_t,
+        opal_object_t,
+        trk_con,
+        trk_des);
+
+static void restart_callback( int fd, short args, void *cbdata )
+{
+    orte_restart_tracker_t *trk = (orte_restart_tracker_t*)cbdata;
+    ORTE_ACQUIRE_OBJECT(trk);
+    orte_odls.restart_proc( trk->proc );
+    OBJ_RELEASE(trk);
+}
+
+int orte_reinit_restart_proc( orte_proc_t *proc )
+{
+    // Restart a process through the orte_event_base to avoid 
+    // races. For example, cancel_callback in orte_wait, when 
+    // the process restarts on the same node
+    orte_restart_tracker_t *trk;
+    trk = OBJ_NEW(orte_restart_tracker_t);
+    OBJ_RETAIN(proc);  // protect against race conditions
+    trk->proc = proc;
+    ORTE_THREADSHIFT(trk, orte_event_base, restart_callback, ORTE_SYS_PRI);
+
+    return ORTE_SUCCESS;
+}

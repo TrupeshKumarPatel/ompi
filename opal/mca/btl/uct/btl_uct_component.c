@@ -307,7 +307,7 @@ ucs_status_t mca_btl_uct_am_handler (void *arg, void *data, size_t length, unsig
     return UCS_OK;
 }
 
-#if UCT_API > UCT_VERSION(1, 7)
+#if UCT_API >= UCT_VERSION(1, 7)
 static int mca_btl_uct_component_process_uct_md (uct_component_h component, uct_md_resource_desc_t *md_desc,
                                                  char **allowed_ifaces)
 #else
@@ -347,7 +347,7 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
     md = OBJ_NEW(mca_btl_uct_md_t);
 
 
-#if UCT_API > UCT_VERSION(1, 7)
+#if UCT_API >= UCT_VERSION(1, 7)
     uct_md_config_read (component, NULL, NULL, &uct_config);
     uct_md_open (component, md_desc->md_name, uct_config, &md->uct_md);
 #else
@@ -379,7 +379,7 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-#if UCT_API > UCT_VERSION(1, 7)
+#if UCT_API >= UCT_VERSION(1, 7)
     module->uct_component = component;
 #endif
 
@@ -408,7 +408,7 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
     return OPAL_SUCCESS;
 }
 
-#if UCT_API > UCT_VERSION(1, 7)
+#if UCT_API >= UCT_VERSION(1, 7)
 static int mca_btl_uct_component_process_uct_component (uct_component_h component, char **allowed_ifaces)
 {
     uct_component_attr_t attr = {.field_mask = UCT_COMPONENT_ATTR_FIELD_NAME |
@@ -442,7 +442,7 @@ static int mca_btl_uct_component_process_uct_component (uct_component_h componen
 
     return OPAL_SUCCESS;
 }
-#endif /* UCT_API > UCT_VERSION(1, 7) */
+#endif /* UCT_API >= UCT_VERSION(1, 7) */
 
 /*
  *  UCT component initialization:
@@ -478,7 +478,7 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
 
     mca_btl_uct_component.module_count = 0;
 
-#if UCT_API > UCT_VERSION(1, 7)
+#if UCT_API >= UCT_VERSION(1, 7)
     uct_component_h *components;
     unsigned num_components;
 
@@ -512,7 +512,7 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
 
     uct_release_md_resource_list (resources);
 
-#endif /* UCT_API > UCT_VERSION(1, 7) */
+#endif /* UCT_API >= UCT_VERSION(1, 7) */
 
     opal_argv_free (allowed_ifaces);
     mca_btl_uct_modex_send ();

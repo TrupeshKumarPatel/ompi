@@ -339,7 +339,7 @@ error:
     }
 
     opal_reinit_enable();
-    point( argc, argv, state );
+    return point( argc, argv, state );
 }
 
 /* ===================================================== */

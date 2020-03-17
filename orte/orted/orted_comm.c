@@ -1429,11 +1429,16 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         {
             /* unpack the number of processes */
             uint32_t num_procs;
+            // Store the failed proc list in temporary file
+            fp = fopen("/tmp/failures", "w");
+            assert( NULL != fp );
+
             n = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_procs, &n, OPAL_UINT32)) ) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
+            fprintf(fp, "%d\n", num_procs);
 
             // First restart all failed processes and register them to PMIx
             opal_list_t jdata_list, failed_proc_list;
@@ -1454,6 +1459,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     ORTE_ERROR_LOG(ret);
                     goto CLEANUP;
                 }
+                fprintf(fp, "%d ", proc.vpid);
 
                 /* Fix jdata and proc objects */
                 /* look up job data object */
@@ -1623,6 +1629,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 }
             }
             OPAL_LIST_DESTRUCT( &jdata_list );
+
+            fclose(fp);
 
             // Third, Reinit all survivor processes
             // TODO: is this safe for different jobs under the same daemon?

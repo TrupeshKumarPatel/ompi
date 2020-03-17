@@ -32,7 +32,7 @@ typedef enum {
     OMPI_REINIT_RESTARTED
 } OMPI_reinit_state_t;
 
-typedef int (*MPI_Restart_point)(int argc, char **argv, OMPI_reinit_state_t state);
+typedef int (*MPI_Restart_point)(int argc, char **argv, OMPI_reinit_state_t state, int num_failed_procs, int *failed_procs);
 
 OMPI_DECLSPEC int OMPI_Reinit_state(int *state);
 

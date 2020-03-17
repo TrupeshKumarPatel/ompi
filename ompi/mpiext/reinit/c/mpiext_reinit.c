@@ -42,6 +42,11 @@
 static const char FUNC_NAME[] = "OMPI_Reinit";
 static volatile int n_reinit = 0;
 
+// Data on failed procs
+int num_failed_procs = 0;
+int *failed_procs = NULL;
+FILE *fp = NULL;
+
 static void rollback_on_reinit(int sig)
 {
     if( sig == SIGREINIT ) {
@@ -96,10 +101,11 @@ void reinit_proc_err_cb(int status,
         cbfunc(OMPI_ERR_HANDLERS_COMPLETE, NULL, NULL, NULL, cbdata);
     }
 
-    DBG_PRINT("%s:%d PROC ERR CB source jobid %u vpid %u status %s\n", __FILE__, __LINE__,
-            source->jobid, source->vpid,
-            ( OPAL_ERR_PROC_ABORTED == status ? "OPAL_ERR_PROC_ABORTED" :
-              ( OPAL_ERR_UNREACH == status ? "OPAL_ERR_UNREACH" : "UNHANDLED ERROR!" ) ) );
+    DBG_PRINT("%s:%d [%u:%u] PROC ERR CB source jobid %u vpid %u status %s\n", __FILE__, __LINE__,
+          orte_process_info.my_name.jobid, orte_process_info.my_name.vpid,
+          source->jobid, source->vpid,
+          ( OPAL_ERR_PROC_ABORTED == status ? "OPAL_ERR_PROC_ABORTED" :
+            ( OPAL_ERR_UNREACH == status ? "OPAL_ERR_UNREACH" : "UNHANDLED ERROR!" ) ) );
     return;
 }
 
@@ -339,8 +345,29 @@ error:
         DBG_PRINT("UNKNOWN STATE: %u\n", state );
     }
 
+    // Read the failed process list, written by the node daemon
+    if( state != OMPI_REINIT_NEW) {
+       fp = fopen("/tmp/failures", "r");
+
+       fscanf(fp, "%d\n", &num_failed_procs);
+
+       DBG_PRINT("num_procs %d\n", num_failed_procs);
+
+       if( NULL != failed_procs )
+          free(failed_procs);
+
+       failed_procs = (int *)malloc( sizeof(int) * num_failed_procs );
+       int j;
+       for(j=0; j<num_failed_procs; j++) {
+          fscanf(fp, "%d ", &failed_procs[j] );
+          DBG_PRINT("%d ", failed_procs[j]);
+       }
+       DBG_PRINT("\n");
+       fclose(fp);
+    }
+
     opal_reinit_enable();
-    return point( argc, argv, state );
+    return point( argc, argv, state, num_failed_procs, failed_procs );
 }
 
 /* ===================================================== */

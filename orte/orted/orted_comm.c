@@ -1430,7 +1430,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             /* unpack the number of processes */
             uint32_t num_procs;
             // Store the failed proc list in temporary file
-            fp = fopen("/tmp/failures", "w");
+            fp = fopen("/tmp/failures", "a");
             assert( NULL != fp );
 
             n = 1;

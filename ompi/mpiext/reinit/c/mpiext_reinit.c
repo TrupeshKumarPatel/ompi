@@ -347,20 +347,28 @@ error:
 
     // Read the failed process list, written by the node daemon
     if( state != OMPI_REINIT_NEW) {
-       fp = fopen("/tmp/failures", "r");
-
-       fscanf(fp, "%d\n", &num_failed_procs);
-
-       DBG_PRINT("num_procs %d\n", num_failed_procs);
-
        if( NULL != failed_procs )
           free(failed_procs);
 
-       failed_procs = (int *)malloc( sizeof(int) * num_failed_procs );
-       int j;
-       for(j=0; j<num_failed_procs; j++) {
-          fscanf(fp, "%d ", &failed_procs[j] );
-          DBG_PRINT("%d ", failed_procs[j]);
+       fp = fopen("/tmp/failures", "r");
+
+       num_failed_procs = 0;
+
+       // Format: (N procs\n <pid> <pid> <pid>\n)+
+       while( !feof(fp) ) {
+          int num_procs;
+          fscanf(fp, "%d\n", &num_procs);
+
+          DBG_PRINT("num_procs %d\n", num_procs);
+
+          failed_procs = (int *)realloc(failed_procs, sizeof(int) * (num_failed_procs + num_procs ) );
+          int j;
+          for(j=0; j<num_procs; j++) {
+             fscanf(fp, "%d ", &failed_procs[j + num_failed_procs] );
+             DBG_PRINT("%d ", failed_procs[j + num_failed_procs]);
+          }
+
+          num_failed_procs += num_procs;
        }
        DBG_PRINT("\n");
        fclose(fp);

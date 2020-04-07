@@ -1630,6 +1630,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             }
             OPAL_LIST_DESTRUCT( &jdata_list );
 
+            fprintf(fp, "\n");
             fclose(fp);
 
             // Third, Reinit all survivor processes

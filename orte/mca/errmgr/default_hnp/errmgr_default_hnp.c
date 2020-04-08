@@ -457,57 +457,60 @@ static void proc_errors(int fd, short args, void *cbdata)
             opal_list_t failed_proc_list;
             OBJ_CONSTRUCT(&failed_proc_list, opal_list_t);
 
+            /* Find new node */
+            opal_list_t node_list;
+            orte_std_cntr_t num_slots;
+            orte_app_context_t *app;
+            orte_node_t *node;
+
+            app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
+            if( NULL == app ) {
+                assert(0);
+            }
+
+            OBJ_CONSTRUCT(&node_list, opal_list_t);
+            // XXX assumes target_nodes are the same between
+            // daemon and its children procs, we need a node
+            // with a deployed daemon
+            if (ORTE_SUCCESS != orte_rmaps_base_get_target_nodes(&node_list,
+                        &num_slots,
+                        app,
+                        jdata->map->mapping,
+                        false, false)) {
+                assert(0);
+            }
+            if (opal_list_is_empty(&node_list))
+                assert(0);
+
+
+            // find spare node
+            orte_node_t *newnode = NULL;
+            OPAL_LIST_FOREACH(node, &node_list, orte_node_t) {
+                if( node == failed_node ) {
+                    continue;
+                }
+
+                // spare node, should have 0 procs
+                if( 0 == node->num_procs ) {
+                    newnode = node;
+                    break;
+                }
+            }
+
+            assert( NULL != newnode );
+
+            OBJ_RETAIN(newnode);
+
+            OPAL_LIST_DESTRUCT(&node_list);
+
             // Loop through all processes in the node to re-assign them
-            // to another node and add them to the failed_proc_list
+            // to newnode and add them to the failed_proc_list
             for (i=0; i < failed_node->procs->size; i++) {
                 orte_proc_t *pproc;
                 if (NULL != (pproc = (orte_proc_t*)opal_pointer_array_get_item(failed_node->procs, i))) {
-
                     orte_job_t *jdata2;
                     if (NULL == (jdata2 = orte_get_job_data_object(pproc->name.jobid)))
                         assert(0);
-
-                    /* assign node */
-                    opal_list_t node_list;
-                    orte_std_cntr_t num_slots;
-                    orte_app_context_t *app;
-                    orte_node_t *node;
-
-                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata2->apps, pproc->app_idx);
-                    if( NULL == app ) {
-                        assert(0);
-                    }
-
-                    OBJ_CONSTRUCT(&node_list, opal_list_t);
-                    if (ORTE_SUCCESS != orte_rmaps_base_get_target_nodes(&node_list,
-                                &num_slots,
-                                app,
-                                jdata2->map->mapping,
-                                false, false)) {
-                        assert(0);
-                    }
-                    if (opal_list_is_empty(&node_list))
-                        assert(0);
-
-                    // find least loaded node
-                    orte_node_t *newnode = NULL;
-                    while (NULL != (item = opal_list_remove_first(&node_list))) {
-                        node = (orte_node_t*)item;
-                        if( node == failed_node ) {
-                            continue;
-                        }
-                        if( node->num_procs >= node->slots ) {
-                            continue;
-                        }
-                        if( NULL == newnode || newnode->num_procs >= node->num_procs) {
-                            newnode = node;
-                        }
-                    }
-
-                    assert( NULL != newnode );
-                    while (NULL != (item = opal_list_remove_first(&node_list)))
-                        OBJ_RELEASE(item);
-                    OBJ_DESTRUCT(&node_list);
 
                     // replace failed node with new node
                     // NOTE: it may have been replaced by a previous proc of the same job
@@ -517,9 +520,10 @@ static void proc_errors(int fd, short args, void *cbdata)
                         if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(jdata2->map->nodes, j))) {
                             continue;
                         }
+                        // Replace the failed node with the newnode
+                        // XXX only the first proc from this job
+                        // will do this
                         if (nptr == failed_node) {
-                            // TODO do this once
-                            OBJ_RETAIN(newnode);
                             opal_pointer_array_set_item(jdata2->map->nodes, j, newnode);
                             ORTE_FLAG_SET(newnode, ORTE_NODE_FLAG_MAPPED);
                             break;
@@ -532,15 +536,13 @@ static void proc_errors(int fd, short args, void *cbdata)
                     pproc->parent = newnode->daemon->name.vpid;
 
                     // update node info
-                    newnode->num_procs++;
-                    opal_pointer_array_add(newnode->procs, (void*)pproc);
+                    // XXX this will be updated by the receiving daemon
+                    //newnode->num_procs++;
+                    //opal_pointer_array_add(newnode->procs, (void*)pproc);
 
-                    orte_rmaps_base_update_local_ranks(jdata2, failed_node, newnode, pproc);
+                    // TODO XXX is this needed? newnode should be empty
+                    //orte_rmaps_base_update_local_ranks(jdata2, failed_node, newnode, pproc);
 
-                    /* if we wanted to see the map, now is the time to display it */
-                    if (jdata2->map->display_map) {
-                        orte_rmaps_base_display_map(jdata2);
-                    }
                     /* end assign node */
 
                     OBJ_RETAIN( pproc );

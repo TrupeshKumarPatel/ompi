@@ -1484,6 +1484,13 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 }
             }
 
+            // node was not found! it's a new addition
+            if( i == jdata->map->nodes->size || nds == jdata->map->num_nodes) {
+                opal_pointer_array_add(jdata->map->nodes, dmn->node);
+                jdata->map->num_nodes++;
+                ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
+            }
+
             // Update proc info
             proct->parent = parent;
             OBJ_RETAIN(dmn->node);

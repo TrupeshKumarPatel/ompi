@@ -347,8 +347,10 @@ error:
 
     // Read the failed process list, written by the node daemon
     if( state != OMPI_REINIT_NEW) {
-       if( NULL != failed_procs )
+       if( NULL != failed_procs ) {
           free(failed_procs);
+          failed_procs = NULL;
+       }
 
        fp = fopen("/tmp/failures", "r");
 

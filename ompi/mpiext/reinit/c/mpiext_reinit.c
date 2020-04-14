@@ -187,6 +187,7 @@ int OMPI_Reinit(int argc, char **argv, const MPI_Restart_point point)
         volatile bool active;
         bool background_fence = false;
 
+        /******************************** MODEX BARRIER **************************/
         // modex barrier
         if (NULL != opal_pmix.fence_nb) {
             if (opal_pmix_base_async_modex && opal_pmix_collect_all_data) {
@@ -222,6 +223,7 @@ int OMPI_Reinit(int argc, char **argv, const MPI_Restart_point point)
                 goto error;
             }
         }
+        /***************************** END MODEX BARRIER **************************/
 
         // GG: disable re-init, it could have been enabled 
         // during opal_progress() within OMPI_LAZY_WAIT_FOR_COMPLETION
@@ -240,8 +242,21 @@ int OMPI_Reinit(int argc, char **argv, const MPI_Restart_point point)
          * any unknown procs. */
         // Need to remove procs to update the PML/BML/BTL info
         nprocs = 0;
-        procs = ompi_proc_get_allocated (&nprocs);
+        //procs = ompi_proc_get_allocated (&nprocs);
+        procs = ompi_proc_all(&nprocs);
         MCA_PML_CALL(del_procs(procs, nprocs));
+        int i;
+        for(i=0; i<nprocs; i++) {
+            if ((OMPI_CAST_RTE_NAME(&procs[i]->super.proc_name)->jobid == OMPI_PROC_MY_NAME->jobid) &&
+                    (OMPI_CAST_RTE_NAME(&procs[i]->super.proc_name)->vpid  == OMPI_PROC_MY_NAME->vpid)) {
+                OBJ_RELEASE( procs[i] );
+            }
+            else {
+                //DBG_PRINT("destroy proc %d\n", procs[i]->super.proc_name.vpid);
+                OBJ_DESTRUCT( procs[i] );
+            }
+        }
+        free(procs);
 
         // GG: comm_init, should it happen before the MPI barrier?
         // -> need that to clean expected pml_ob1 header sequences and possibly stale communicators

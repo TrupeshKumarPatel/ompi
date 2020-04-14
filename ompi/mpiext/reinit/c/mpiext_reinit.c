@@ -241,6 +241,7 @@ int OMPI_Reinit(int argc, char **argv, const MPI_Restart_point point)
         // Need to remove procs to update the PML/BML/BTL info
         nprocs = 0;
         procs = ompi_proc_get_allocated (&nprocs);
+        MCA_PML_CALL(add_procs(procs, nprocs));
         MCA_PML_CALL(del_procs(procs, nprocs));
 
         // GG: comm_init, should it happen before the MPI barrier?

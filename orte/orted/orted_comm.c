@@ -1426,207 +1426,174 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         break;
 
     case ORTE_DAEMON_RESTART_PROCS:
-        // Reinit all survivor processes
-        // TODO: is this safe for different jobs under the same daemon?
-        /* signal them */
-        if (ORTE_SUCCESS != (ret = orte_odls.signal_local_procs(NULL, SIGREINIT))) {
-            ORTE_ERROR_LOG(ret);
-        }
-
-        /* unpack the number of processes */
-        uint32_t num_procs;
-        n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_procs, &n, OPAL_UINT32)) ) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-
-        int j;
-        for(j = 0; j < num_procs; j++) {
-            /* unpack the daemon vpid */
+        {
+            /* unpack the number of processes */
+            uint32_t num_procs;
             n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &parent, &n, ORTE_VPID))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_procs, &n, OPAL_UINT32)) ) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
 
-            /* unpack the process's name */
-            n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME)) ) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-
-            /* Fix jdata and proc objects */
-            /* look up job data object */
-            jdata = orte_get_job_data_object(proc.jobid);
-            assert( NULL != jdata );
-
-            proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc.vpid);
-            orte_remove_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED);
-
-            // need to do a lot more work to restart a migrated process
-            orte_job_t *daemons = (orte_job_t *)orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-            assert(NULL != daemons);
-            orte_proc_t *dmn = opal_pointer_array_get_item(daemons->procs,parent);
-            assert(NULL != dmn);
-
-            // replace failed node in jdata->map with local node
-            int nds = 0;
-            for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
-                if (NULL == (node = opal_pointer_array_get_item(jdata->map->nodes, i))) {
-                    continue;
+            // First restart all failed processes and register them to PMIx
+            opal_list_t jdata_list, failed_proc_list;
+            OBJ_CONSTRUCT( &jdata_list, opal_list_t );
+            OBJ_CONSTRUCT( &failed_proc_list, opal_list_t );
+            int j;
+            for(j = 0; j < num_procs; j++) {
+                /* unpack the daemon vpid */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &parent, &n, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
                 }
 
-                if(node == proct->node) {
-                    opal_pointer_array_set_item(jdata->map->nodes, i, dmn->node);
-                    break;
+                /* unpack the process's name */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME)) ) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
                 }
-            }
 
-            // node was not found! it's a new addition
-            if( i == jdata->map->nodes->size || nds == jdata->map->num_nodes) {
-                opal_pointer_array_add(jdata->map->nodes, dmn->node);
-                jdata->map->num_nodes++;
-                ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
-            }
+                /* Fix jdata and proc objects */
+                /* look up job data object */
+                jdata = orte_get_job_data_object(proc.jobid);
+                assert( NULL != jdata );
+                orte_remove_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED);
 
-            // Update proc info
-            proct->parent = parent;
-            OBJ_RETAIN(dmn->node);
-            proct->node = dmn->node;
-            OBJ_RETAIN(proct);
+                proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc.vpid);
+                opal_list_append( &failed_proc_list, &proct->super );
+                OBJ_RETAIN( proct );
 
-            // Update node info
-            // TODO: Fix attributes, e.g., ORTE_PROC_CPU_BITMAP
-            proct->node->num_procs++;
-            opal_pointer_array_add(proct->node->procs, (void*)proct);
+                orte_job_t *daemons = (orte_job_t *)orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+                assert(NULL != daemons);
+                orte_proc_t *dmn = opal_pointer_array_get_item(daemons->procs,parent);
+                assert(NULL != dmn);
 
-            /* END */
-
-            // Check whether this process is local to restart
-            // using the parent daemon (may change due to node failure)
-            if( parent == ORTE_PROC_MY_NAME->vpid ) {
-                // if the process is migrated, complicated restart
-                if( !ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_LOCAL) ) {
-                    jdata->num_local_procs++;
-
-                    // set flags
-                    ORTE_FLAG_SET(proct, ORTE_PROC_FLAG_LOCAL);
-                    ORTE_FLAG_SET(proct, ORTE_PROC_FLAG_ALIVE);
-                    ORTE_FLAG_SET(proct, ORTE_PROC_FLAG_REG);
-
-                    opal_pointer_array_add(orte_local_children, proct);
-                    orte_app_context_t *app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proct->app_idx);
-                    ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
-
-                    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
-                        /* reset the mapped flags */
-                        for (n=0; n < jdata->map->nodes->size; n++) {
-                            if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
-                                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
-                            }
-                        }
+                // replace failed node in jdata->map with new node
+                // XXX if multiple processes from the same node have failed
+                // only the first encountered will update the map
+                int nds = 0;
+                for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
+                    if (NULL == (node = opal_pointer_array_get_item(jdata->map->nodes, i))) {
+                        continue;
                     }
 
-                    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
-                        /* compute and save bindings of local children */
-                        if (ORTE_SUCCESS != orte_rmaps_base_compute_bindings(jdata)) {
+                    if(node == proct->node) {
+                        opal_pointer_array_set_item(jdata->map->nodes, i, dmn->node);
+                        break;
+                    }
+                }
+
+                // Update proc info
+                proct->parent = parent;
+                OBJ_RETAIN(dmn->node);
+                proct->node = dmn->node;
+                OBJ_RETAIN(proct);
+                ORTE_FLAG_SET(proct->node, ORTE_NODE_FLAG_MAPPED);
+
+                // Update node info
+                // TODO: Fix attributes, e.g., ORTE_PROC_CPU_BITMAP
+                proct->node->num_procs++;
+                opal_pointer_array_add(proct->node->procs, (void*)proct);
+
+                // Check whether this process is local to restart
+                // using the parent daemon (may change due to node failure)
+                if( parent == ORTE_PROC_MY_NAME->vpid ) {
+                    // if the process is migrated, complicated restart
+                    if( !ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_LOCAL) ) {
+
+                        ORTE_FLAG_SET(proct, ORTE_PROC_FLAG_LOCAL);
+                        jdata->num_local_procs++;
+
+                        opal_pointer_array_add(orte_local_children, proct);
+                        orte_app_context_t *app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proct->app_idx);
+                        ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
+
+                        // Add this job to update bindings only if it's not added earlier
+                        orte_job_t *jdata_iter = NULL;
+                        bool found = false;
+                        OPAL_LIST_FOREACH( jdata_iter, &jdata_list, orte_job_t ) {
+                            if( jdata_iter == jdata )
+                                found = true;
+                        }
+                        if( !found ) {
+                            opal_list_append( &jdata_list, &jdata->super );
+                            OBJ_RETAIN( jdata );
+                        }
+
+                        if (ORTE_SUCCESS != orte_schizo.setup_fork(jdata, app)) {
                             assert(0);
                         }
-                    }
 
-                    /* if we wanted to see the map, now is the time to display it */
-                    if (jdata->map->display_map) {
-                        orte_rmaps_base_display_map(jdata);
-                    }
-
-                    if (ORTE_SUCCESS != orte_schizo.setup_fork(jdata, app)) {
-                        assert(0);
-                    }
-
-                    char *effective_dir = NULL;
-                    if (ORTE_SUCCESS != setup_path(app, &effective_dir)) {
-                        assert(0);
-                    }
-
-                    if (ORTE_SUCCESS != orte_filem.link_local_files(jdata, app)) {
-                        assert(0);
-                    }
-
-                    char **argvptr;
-                    char *pathenv = NULL, *mpiexec_pathenv = NULL;
-                    char *full_search;
-                    /* Search for the OMPI_exec_path and PATH settings in the environment. */
-                    for (argvptr = app->env; *argvptr != NULL; argvptr++) {
-                        if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
-                            mpiexec_pathenv = *argvptr + 15;
+                        char *effective_dir = NULL;
+                        if (ORTE_SUCCESS != setup_path(app, &effective_dir)) {
+                            assert(0);
                         }
-                        if (0 == strncmp("PATH=", *argvptr, 5)) {
-                            pathenv = *argvptr + 5;
-                        }
-                    }
 
-                    /* If OMPI_exec_path is set (meaning --path was used), then create a
-                       temporary environment to be used in the search for the executable.
-                       The PATH setting in this temporary environment is a combination of
-                       the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
-                       then just use existing environment with PATH in it.  */
-                    if (NULL != mpiexec_pathenv) {
-                        argvptr = NULL;
-                        if (pathenv != NULL) {
-                            asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
+                        if (ORTE_SUCCESS != orte_filem.link_local_files(jdata, app)) {
+                            assert(0);
+                        }
+
+                        char **argvptr;
+                        char *pathenv = NULL, *mpiexec_pathenv = NULL;
+                        char *full_search;
+                        /* Search for the OMPI_exec_path and PATH settings in the environment. */
+                        for (argvptr = app->env; *argvptr != NULL; argvptr++) {
+                            if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
+                                mpiexec_pathenv = *argvptr + 15;
+                            }
+                            if (0 == strncmp("PATH=", *argvptr, 5)) {
+                                pathenv = *argvptr + 5;
+                            }
+                        }
+
+                        /* If OMPI_exec_path is set (meaning --path was used), then create a
+                           temporary environment to be used in the search for the executable.
+                           The PATH setting in this temporary environment is a combination of
+                           the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
+                           then just use existing environment with PATH in it.  */
+                        if (NULL != mpiexec_pathenv) {
+                            argvptr = NULL;
+                            if (pathenv != NULL) {
+                                asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
+                            } else {
+                                asprintf(&full_search, "%s", mpiexec_pathenv);
+                            }
+                            opal_setenv("PATH", full_search, true, &argvptr);
+                            free(full_search);
                         } else {
-                            asprintf(&full_search, "%s", mpiexec_pathenv);
+                            argvptr = app->env;
                         }
-                        opal_setenv("PATH", full_search, true, &argvptr);
-                        free(full_search);
-                    } else {
-                        argvptr = app->env;
+
+                        int rc = orte_util_check_context_app(app, argvptr);
+                        /* do not ERROR_LOG - it will be reported elsewhere */
+                        if (NULL != mpiexec_pathenv) {
+                            opal_argv_free(argvptr);
+                        }
+                        if (ORTE_SUCCESS != rc) {
+                            assert(0);
+                        }
+
+                        /* tell all children that they are being launched via ORTE */
+                        opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &app->env);
+
+                        char *msg;
+                        /* if the user requested it, set the system resource limits */
+                        if (OPAL_SUCCESS != (rc = opal_util_init_sys_limits(&msg))) {
+                            assert(0);
+                        }
+
+                        char basedir[MAXPATHLEN];
+                        /* reset our working directory back to our default location - if we
+                         * don't do this, then we will be looking for relative paths starting
+                         * from the last wdir option specified by the user. Thus, we would
+                         * be requiring that the user keep track on the cmd line of where
+                         * each app was located relative to the prior app, instead of relative
+                         * to their current location
+                         */
+                        chdir(basedir);
                     }
-
-                    int rc = orte_util_check_context_app(app, argvptr);
-                    /* do not ERROR_LOG - it will be reported elsewhere */
-                    if (NULL != mpiexec_pathenv) {
-                        opal_argv_free(argvptr);
-                    }
-                    if (ORTE_SUCCESS != rc) {
-                        assert(0);
-                    }
-
-
-                    /* tell all children that they are being launched via ORTE */
-                    opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &app->env);
-
-                    char *msg;
-                    /* if the user requested it, set the system resource limits */
-                    if (OPAL_SUCCESS != (rc = opal_util_init_sys_limits(&msg))) {
-                        assert(0);
-                    }
-
-                    char basedir[MAXPATHLEN];
-                    /* reset our working directory back to our default location - if we
-                     * don't do this, then we will be looking for relative paths starting
-                     * from the last wdir option specified by the user. Thus, we would
-                     * be requiring that the user keep track on the cmd line of where
-                     * each app was located relative to the prior app, instead of relative
-                     * to their current location
-                     */
-                    chdir(basedir);
-
-                    if (OPAL_SUCCESS != (ret = opal_pmix.server_register_client(&proct->name, geteuid(), getegid(),
-                                    (void*)proct, NULL, NULL))) {
-                        ORTE_ERROR_LOG(ret);
-                    }
-
-                    if (ORTE_SUCCESS != (ret = orte_reinit_restart_proc( proct ) ) ) {
-                        ORTE_ERROR_LOG(ret);
-                    }
-                }
-                // if the proccess is local, simple restart
-                else if (ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_LOCAL)) {
-                    // Remove notification job attributes, otherwise if a proc fails gain, HNP is not notified
-                    orte_remove_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED);
 
                     if (OPAL_SUCCESS != (ret = opal_pmix.server_register_client(&proct->name, geteuid(), getegid(),
                                     (void*)proct, NULL, NULL))) {
@@ -1639,10 +1606,44 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     }
                 }
             }
+
+            // Second compute bindings
+            orte_job_t *jdata_iter = NULL;
+            OPAL_LIST_FOREACH( jdata_iter, &jdata_list, orte_job_t ) {
+                if (!orte_get_attribute(&jdata_iter->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+                    /* compute and save bindings of local children */
+                    if (ORTE_SUCCESS != orte_rmaps_base_compute_bindings(jdata_iter)) {
+                        assert(0);
+                    }
+                }
+
+                /* if we wanted to see the map, now is the time to display it */
+                if (jdata_iter->map->display_map) {
+                    orte_rmaps_base_display_map(jdata);
+                }
+            }
+            OPAL_LIST_DESTRUCT( &jdata_list );
+
+            // Third, Reinit all survivor processes
+            // TODO: is this safe for different jobs under the same daemon?
+            /* signal them */
+            if (ORTE_SUCCESS != (ret = orte_odls.signal_local_procs(NULL, SIGREINIT))) {
+                ORTE_ERROR_LOG(ret);
+            }
+
+            // Fourth, set failed procs as alive
+            // XXX must happen after signal REINIT to avoid signaling them
+            orte_proc_t *proc_iter = NULL;
+            OPAL_LIST_FOREACH( proc_iter, &failed_proc_list, orte_proc_t ) {
+                // set flags
+                ORTE_FLAG_SET(proc_iter, ORTE_PROC_FLAG_ALIVE);
+                ORTE_FLAG_SET(proc_iter, ORTE_PROC_FLAG_REG);
+            }
+
+            OPAL_LIST_DESTRUCT( &failed_proc_list );
+
+            break;
         }
-
-        break;
-
     default:
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
     }

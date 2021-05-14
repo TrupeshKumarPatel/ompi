@@ -18,7 +18,7 @@ noinst_LTLIBRARIES = libmpiext_reinit_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(ompiincludedir)/ompi/mpiext/reinit/c
+ompidir = $(ompiincludedir)/mpiext
 
 # This is the header file that is installed.
 ompi_HEADERS = mpiext_reinit_c.h

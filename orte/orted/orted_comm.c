@@ -48,6 +48,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/pstat/pstat.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
@@ -97,7 +98,6 @@
 
 #include "opal/mca/pmix/base/base.h"
 #include "orte/orted/pmix/pmix_server.h"
-#include "orte/mca/dfs/dfs.h"
 #include "orte/mca/rtc/rtc.h"
 
 #include "opal/runtime/opal_reinit.h"
